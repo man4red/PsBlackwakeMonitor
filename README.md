@@ -1,5 +1,5 @@
 # PsBlackwakeMonitor
-Powershell script to monitor server log
+Powershell script to update, start and monitor server
 
 # Installation
 * put script to server folder, for example "C:\SteamCMD\blackwake_server"
