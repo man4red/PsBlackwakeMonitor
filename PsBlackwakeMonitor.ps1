@@ -37,7 +37,7 @@ $pattern1 = "(?i)(Steam game server started\.|A client connected on socket \d{0,
 # Pattern2 (YELLOW COLOR)
 $pattern2 = "(?i)(Server\: Received disconnect from \d{0,2}, there are now \d{0,2} clients connected|Auth ticket canceled for player \d{1,2})"
 # Pattern3 (RED COLOR)
-$pattern3 = "(?i)(kick(ed|ing)?|ban(ned|ning)?|\d{1,100} bans)"
+$pattern3 = "(?i)(kick(ed|ing)?|ban(ned|ning)?|\d{1,10} bans)"
 # ExcludePattern
 $ExcludePattern = "(?ims)(WrongConnection|because the the game object|k_EBeginAuthSessionResultOK|got info for|Got id for|Getting large avatar|Getting stats for|Got players stats|temporarily using client score|runtime|Line: 42|\.gen\.cpp|UnityEngine|Grapple index|Exception has been thrown|Could not get lobby info|Timeout Socket|Object reference not set|Validated outfit|Packet has been already received|could not be played| no free slot for incoming connection|Shot denied for|Filename:|If you absolutely need|The effective box size|BoxColliders does not|image effect|RectTransform|could not load|platform assembly|Loading|deprecated|Current environment|object was null|NoResources|Debug|Sending current player|has been disconnected by timeout|song ended for team |sent incorrect|Error: NoResources Socket: |or call this function only for existing animations|Could not get lobby info for player|Filename:|does not support|The effective box size has been|If you absolutely need to use|Visible only by this ship|NullReferenceException|filename unknown)"
 
@@ -363,4 +363,4 @@ while (-not [bool]($serverProcess = (Get-Process | ? Path -ieq $serverExePath)) 
 $pswindow.WindowTitle = "$serverName | $serverIp`:$serverPort | UpdateRate`: $serverPlayerUpdateRate | ServerOnline`: $([bool]$serverProcess) | PlayersOnline`: 0"
 
 while (-not (Test-Path $logFilePath)) { Write-Host "Waiting for log..."; Start-Sleep 10;  }
-Get-Content $logFilePath -Wait -Tail 100000 | StartServerMonitor -Pattern1 $pattern1 -Pattern2 $pattern2 -Pattern3 $pattern3 -ExcludePattern $ExcludePattern -additionalLog $additionalLogPath
+Get-Content $logFilePath -Wait -Tail 1000 | StartServerMonitor -Pattern1 $pattern1 -Pattern2 $pattern2 -Pattern3 $pattern3 -ExcludePattern $ExcludePattern -additionalLog $additionalLogPath
