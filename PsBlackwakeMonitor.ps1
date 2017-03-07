@@ -1,3 +1,28 @@
+#requires -version 3
+<#
+.SYNOPSIS
+  Update/validate, start and monitor Blackwake Server
+
+.DESCRIPTION
+  Validation => ServerStart => LogMonitor => LogWrite
+
+.INPUTS
+  None
+
+.OUTPUTS
+  '$serverPath\logs\$additionalLogNameFormat'
+
+.NOTES
+  Version:        1.0
+  Author:         man4red
+  Creation Date:  27.02.2017
+  Purpose/Change: Initial script development
+  
+.EXAMPLE
+  As administrator "start powershell ./PsBlackwakeMonitor.ps1"
+#>
+
+#---------------------------------------------------------[Initialisations]--------------------------------------------------------
 # CHECK FOR ADMIN ACCESS
 If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(`
     [Security.Principal.WindowsBuiltInRole] "Administrator"))
@@ -6,6 +31,8 @@ If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 	Start-Sleep 5
     Break
 }
+
+#----------------------------------------------------------[Declarations]----------------------------------------------------------
 
 # GLOBAL VARS
 $global:dayOfWeek = $(Get-Date).DayOfWeek.value__
@@ -37,10 +64,12 @@ $pattern1 = "(?i)(Steam game server started\.|A client connected on socket \d{0,
 # Pattern2 (YELLOW COLOR)
 $pattern2 = "(?i)(Server\: Received disconnect from \d{0,2}, there are now \d{0,2} clients connected|Auth ticket canceled for player \d{1,2})"
 # Pattern3 (RED COLOR)
-$pattern3 = "(?i)(kick(ed|ing)?|ban(ned|ning)?|\d{1,10} bans)"
+$pattern3 = "(?i)(kick(ed|ing)?|ban(ned|ning)?|\d{1,100} bans)"
 # ExcludePattern
 $ExcludePattern = "(?ims)(WrongConnection|because the the game object|k_EBeginAuthSessionResultOK|got info for|Got id for|Getting large avatar|Getting stats for|Got players stats|temporarily using client score|runtime|Line: 42|\.gen\.cpp|UnityEngine|Grapple index|Exception has been thrown|Could not get lobby info|Timeout Socket|Object reference not set|Validated outfit|Packet has been already received|could not be played| no free slot for incoming connection|Shot denied for|Filename:|If you absolutely need|The effective box size|BoxColliders does not|image effect|RectTransform|could not load|platform assembly|Loading|deprecated|Current environment|object was null|NoResources|Debug|Sending current player|has been disconnected by timeout|song ended for team |sent incorrect|Error: NoResources Socket: |or call this function only for existing animations|Could not get lobby info for player|Filename:|does not support|The effective box size has been|If you absolutely need to use|Visible only by this ship|NullReferenceException|filename unknown)"
 
+
+#-----------------------------------------------------------[Functions]------------------------------------------------------------
 # CLOSE PREVIOUS POWERSHELL CAPTURE WINDOWS
 Function CloseWindowByTitle($title) {
 	$result = (Get-Process |where {$_.mainWindowTItle -like "*$title*" -and $_.Name -eq "powershell" })
@@ -155,7 +184,9 @@ function StartServerMonitor
 			foreach($m in $ms1)
 			{
 				$nonMatchLength = $m.Index - $startIndex
-				Write-Host $inputObject.Substring($startIndex, $nonMatchLength) -NoNew
+				if ($nonMatchLength -ge 0) {
+					Write-Host $inputObject.Substring($startIndex, $nonMatchLength) -NoNew
+				}
 				Write-Host $m.Value -ForegroundColor Green -NoNew
 				$startIndex = $m.Index + $m.Length
 			}
@@ -167,7 +198,9 @@ function StartServerMonitor
 			foreach($m in $ms2)
 			{
 				$nonMatchLength = $m.Index - $startIndex
-				Write-Host $inputObject.Substring($startIndex, $nonMatchLength) -NoNew
+				if ($nonMatchLength -ge 0) {
+					Write-Host $inputObject.Substring($startIndex, $nonMatchLength) -NoNew
+				}
 				Write-Host $m.Value -ForegroundColor Yellow -NoNew
 				$startIndex = $m.Index + $m.Length
 			}
@@ -178,7 +211,9 @@ function StartServerMonitor
 			foreach($m in $ms3)
 			{
 				$nonMatchLength = $m.Index - $startIndex
-				Write-Host $inputObject.Substring($startIndex, $nonMatchLength) -NoNew
+				if ($nonMatchLength -ge 0) {
+					Write-Host $inputObject.Substring($startIndex, $nonMatchLength) -NoNew
+				}
 				Write-Host $m.Value -ForegroundColor Red -NoNew
 				$startIndex = $m.Index + $m.Length
 			}
@@ -210,6 +245,8 @@ function StartServerMonitor
 		Write-Host
 	}
 }
+
+#-----------------------------------------------------------[Execution]------------------------------------------------------------
 ########################################################################################
 ###################################### START MAIN ######################################
 ########################################################################################
