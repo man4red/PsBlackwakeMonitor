@@ -11,6 +11,6 @@ Blackwake v0.1.15e Server  (tested)
 * Edit settings
 * Finally execute ```start powershell .\PsBlackwakeMonitor.ps1```
 
-![PsBlackwakeMonitor Screenshot](https://raw.githubusercontent.com/man4red/PsBlackwakeMonitor/master/PsBlackwakeMonitor_1.png)
+![PsBlackwakeMonitor Screenshot](https://raw.githubusercontent.com/man4red/PsBlackwakeMonitor/screenshots/PsBlackwakeMonitor_1.png?raw=true)
 
 Feel free to contact me in any needs
