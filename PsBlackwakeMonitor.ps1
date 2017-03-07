@@ -218,6 +218,9 @@ function StartServerMonitor
 			$playersOnline = $ms4.Captures.Groups["online"].Value
 			$pswindow.WindowTitle = $pswindow.WindowTitle -replace 'PlayersOnline: \d{1,2}', "PlayersOnline: $playersOnline"
 		}
+		
+		# SERVER ONLINE
+		$pswindow.WindowTitle = $pswindow.WindowTitle -replace 'ServerOnline: (True|False)', "ServerOnline: $([bool]$serverProcess)"
 
 		# CAPTURE ADDITIONAL LOG?
 		if ([bool]$additionalLogPath -eq $true) {
@@ -260,7 +263,7 @@ $v = 1
 $s = 1;
 
 # CHECK IF NOT VALIDATED AND STARTED
-while (-not [bool]($serverProcess = (Get-Process | ? Path -ieq $serverExePath)) `
+while (-not [bool]($global:serverProcess = (Get-Process | ? Path -ieq $serverExePath)) `
 			-or `
 			(-not ($validated) -and -not [bool]($serverProcess = (Get-Process | ? Path -ieq $serverExePath))) )
 {
