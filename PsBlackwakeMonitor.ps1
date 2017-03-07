@@ -57,6 +57,7 @@ $global:skipValidation = $false
 $global:additionalLogNameFormat = "$(Get-Date -Format 'yyyy.MM.dd').log"
 $global:additionalLogPath = "$serverPath\logs\$additionalLogNameFormat"
 $global:waitForPort = $true
+$global:windowTitle = "$serverName | $serverIp`:$serverPort | UpdateRate`: $serverPlayerUpdateRate | ServerOnline`: $([bool]$serverProcess) | PlayersOnline`: 0"
 
 # SEARCH REGEX PATTERNS
 # Pattern1 (GREEN COLOR)
@@ -215,7 +216,7 @@ function StartServerMonitor
 		# PLAYERS ONLINE
 		if ($ms4.Success -eq $true -and $ms4.Captures.Groups.Count -eq 2) {
 			$playersOnline = $ms4.Captures.Groups["online"].Value
-			$pswindow.WindowTitle = $pswindow.WindowTitle -replace 'PlayersOnline: \d{0,2}', "PlayersOnline: $playersOnline"
+			$pswindow.WindowTitle = $pswindow.WindowTitle -replace 'PlayersOnline: \d{1,2}', "PlayersOnline: $playersOnline"
 		}
 
 		# CAPTURE ADDITIONAL LOG?
@@ -380,7 +381,7 @@ while (-not [bool]($serverProcess = (Get-Process | ? Path -ieq $serverExePath)) 
 }
 
 
-$pswindow.WindowTitle = "$serverName | $serverIp`:$serverPort | UpdateRate`: $serverPlayerUpdateRate | ServerOnline`: $([bool]$serverProcess) | PlayersOnline`: 0"
+$pswindow.WindowTitle = $windowTitle
 
 while (-not (Test-Path $logFilePath)) { Write-Host "Waiting for log..."; Start-Sleep 10;  }
-Get-Content $logFilePath -Wait -Tail 1000 | StartServerMonitor
+Get-Content $logFilePath -Wait -Tail 2000 | StartServerMonitor
