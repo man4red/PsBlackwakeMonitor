@@ -60,13 +60,15 @@ $global:waitForPort = $true
 
 # SEARCH REGEX PATTERNS
 # Pattern1 (GREEN COLOR)
-$pattern1 = "(?i)(Steam game server started\.|A client connected on socket \d{0,2}, there are now \d{0,2} clients connected|\[TeamSelect\] player .* joined$|\[TeamSelect\] player .* joined team .*$|Player .* requested to join team \d{0,2}|Player .* is now on team \d{0,2})"
+$global:greenPattern = "(?i)(Steam game server started\.|A client connected on socket \d{0,2}, there are now \d{0,2} clients connected|\[TeamSelect\] player .* joined$|\[TeamSelect\] player .* joined team .*$|Player .* requested to join team \d{0,2}|Player .* is now on team \d{0,2})"
 # Pattern2 (YELLOW COLOR)
-$pattern2 = "(?i)(Server\: Received disconnect from \d{0,2}, there are now \d{0,2} clients connected|Auth ticket canceled for player \d{1,2})"
+$global:yellowPattern = "(?i)(Server\: Received disconnect from \d{0,2}, there are now \d{0,2} clients connected|Auth ticket canceled for player \d{1,2})"
 # Pattern3 (RED COLOR)
-$pattern3 = "(?i)(kick(ed|ing)?|ban(ned|ning)?|\d{1,100} bans)"
+$global:redPattern = "(?i)(kick(ed|ing)?|ban(ned|ning)?|\d{1,100} bans)"
 # ExcludePattern
-$ExcludePattern = "(?ims)(InternalInvoke|WrongConnection|because the the game object|k_EBeginAuthSessionResultOK|got info for|Got id for|Getting large avatar|Getting stats for|Got players stats|temporarily using client score|runtime|Line: 42|\.gen\.cpp|UnityEngine|Grapple index|Exception has been thrown|Could not get lobby info|Timeout Socket|Object reference not set|Validated outfit|Packet has been already received|could not be played| no free slot for incoming connection|Shot denied for|Filename:|If you absolutely need|The effective box size|BoxColliders does not|image effect|RectTransform|could not load|platform assembly|Loading|deprecated|Current environment|object was null|NoResources|Debug|Sending current player|has been disconnected by timeout|song ended for team |sent incorrect|Error: NoResources Socket: |or call this function only for existing animations|Could not get lobby info for player|Filename:|does not support|The effective box size has been|If you absolutely need to use|Visible only by this ship|NullReferenceException|filename unknown)"
+$global:excludePattern = "(?ims)(InternalInvoke|WrongConnection|because the the game object|k_EBeginAuthSessionResultOK|got info for|Got id for|Getting large avatar|Getting stats for|Got players stats|temporarily using client score|runtime|Line: 42|\.gen\.cpp|UnityEngine|Grapple index|Exception has been thrown|Could not get lobby info|Timeout Socket|Object reference not set|Validated outfit|Packet has been already received|could not be played| no free slot for incoming connection|Shot denied for|Filename:|If you absolutely need|The effective box size|BoxColliders does not|image effect|RectTransform|could not load|platform assembly|Loading|deprecated|Current environment|object was null|NoResources|Debug|Sending current player|has been disconnected by timeout|song ended for team |sent incorrect|Error: NoResources Socket: |or call this function only for existing animations|Could not get lobby info for player|Filename:|does not support|The effective box size has been|If you absolutely need to use|Visible only by this ship|NullReferenceException|filename unknown)"
+# PlayersOnline Pattern
+$global:playersOnlinePattern = ".*A client connected on socket \d{0,2}, there are now (?<online>\d{0,2}) clients connected.*|.*disconnect from \d{0,2}, there are now (?<online>\d{0,2}) clients connected.*"
 
 
 #-----------------------------------------------------------[Functions]------------------------------------------------------------
@@ -143,29 +145,14 @@ function StartServerMonitor
 {
    param(
 		[Parameter(Mandatory = $false, ValueFromPipeline = $true)]
-		[string] $InputObject,
-
-		[Parameter(Mandatory = $true, Position = 0)]
-		[string] $Pattern1,
-
-		[Parameter(Mandatory = $false, Position = 1)]
-		[string] $Pattern2,
-
-		[Parameter(Mandatory = $false, Position = 2)]
-		[string] $Pattern3,
-
-		[Parameter(Mandatory = $false, Position = 3)]
-		[string] $ExcludePattern,
-
-		[Parameter(Mandatory = $false, Position = 4)]
-		[string] $additionalLog
+		[string] $InputObject
 	)
 	begin{
-		$r1 = [regex]$Pattern1;
-		$r2 = [regex]$Pattern2;
-		$r3 = [regex]$Pattern3;
-		$ExcludePattern = [regex]$ExcludePattern;
-		$pOnline = [regex]".*A client connected on socket \d{0,2}, there are now (?<online>\d{0,2}) clients connected.*|.*disconnect from \d{0,2}, there are now (?<online>\d{0,2}) clients connected.*";
+		$r1 = [regex]$greenPattern;
+		$r2 = [regex]$yellowPattern;
+		$r3 = [regex]$redPattern;
+		$excludePattern = [regex]$excludePattern;
+		$playersOnlinePattern = [regex]$playersOnlinePattern;
 	}
 	process
 	{
@@ -176,11 +163,11 @@ function StartServerMonitor
 		$ms1 = $r1.Matches($inputObject)
 		$ms2 = $r2.Matches($inputObject)
 		$ms3 = $r3.Matches($inputObject)
-		$ms4 = $pOnline.Matches($inputObject)
+		$ms4 = $playersOnlinePattern.Matches($inputObject)
 		$startIndex = 0
 
 		# GREEN COLOR
-		if ([bool]$Pattern2 -eq $True) {
+		if ([bool]$greenPattern -eq $True) {
 			foreach($m in $ms1)
 			{
 				$nonMatchLength = $m.Index - $startIndex
@@ -194,7 +181,7 @@ function StartServerMonitor
 		}
 
 		# YELLOW COLOR
-		if ([bool]$Pattern2 -eq $True) {
+		if ([bool]$yellowPattern -eq $True) {
 			foreach($m in $ms2)
 			{
 				$nonMatchLength = $m.Index - $startIndex
@@ -207,7 +194,7 @@ function StartServerMonitor
 		}
 		
 		# RED COLOR
-		if ([bool]$Pattern3 -eq $True) {
+		if ([bool]$redPattern -eq $True) {
 			foreach($m in $ms3)
 			{
 				$nonMatchLength = $m.Index - $startIndex
@@ -223,7 +210,6 @@ function StartServerMonitor
 		if($startIndex -lt $inputObject.Length)
 		{
 			Write-Host $inputObject.Substring($startIndex) -NoNew -ForegroundColor Gray
-			
 		}
 		
 		# PLAYERS ONLINE
@@ -233,10 +219,10 @@ function StartServerMonitor
 		}
 
 		# CAPTURE ADDITIONAL LOG?
-		if ([bool]$additionalLog -eq $true) {
-			$ms1[0].Value | Out-File $additionalLog -Append
-			$ms2[0].Value | Out-File $additionalLog -Append
-			$ms3[0].Value | Out-File $additionalLog -Append
+		if ([bool]$additionalLogPath -eq $true) {
+			$ms1[0].Value | Out-File $additionalLogPath -Append -Encoding UTF8
+			$ms2[0].Value | Out-File $additionalLogPath -Append -Encoding UTF8
+			$ms3[0].Value | Out-File $additionalLogPath -Append -Encoding UTF8
 			<#if ($startIndex -lt $inputObject.Length) {
 				$inputObject  | Out-File "OutNew" -Append
 			}#>
@@ -247,9 +233,6 @@ function StartServerMonitor
 }
 
 #-----------------------------------------------------------[Execution]------------------------------------------------------------
-########################################################################################
-###################################### START MAIN ######################################
-########################################################################################
 
 #Close previous window if present
 CloseWindowByTitle "$serverIp`:$serverPort"
@@ -400,4 +383,4 @@ while (-not [bool]($serverProcess = (Get-Process | ? Path -ieq $serverExePath)) 
 $pswindow.WindowTitle = "$serverName | $serverIp`:$serverPort | UpdateRate`: $serverPlayerUpdateRate | ServerOnline`: $([bool]$serverProcess) | PlayersOnline`: 0"
 
 while (-not (Test-Path $logFilePath)) { Write-Host "Waiting for log..."; Start-Sleep 10;  }
-Get-Content $logFilePath -Wait -Tail 1000 | StartServerMonitor -Pattern1 $pattern1 -Pattern2 $pattern2 -Pattern3 $pattern3 -ExcludePattern $ExcludePattern -additionalLog $additionalLogPath
+Get-Content $logFilePath -Wait -Tail 1000 | StartServerMonitor
