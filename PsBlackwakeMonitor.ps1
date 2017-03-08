@@ -232,7 +232,7 @@ function StartServerMonitor
 		}
 		
 		# SERVER ONLINE
-		$pswindow.WindowTitle = $pswindow.WindowTitle -replace 'ServerOnline: (True|False)', "ServerOnline: $([bool]$serverProcess)"
+		$pswindow.WindowTitle = $pswindow.WindowTitle -replace 'ServerOnline: (True|False)', "ServerOnline: $([bool](GetBlackwakeProcessPath))"
 
 		# CAPTURE ADDITIONAL LOG?
 		if ([bool]$additionalLogPath -eq $true) {
