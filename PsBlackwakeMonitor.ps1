@@ -178,6 +178,7 @@ function StartServerMonitor
 		$ms3 = $r3.Matches($inputObject)
 		$ms4 = $playersOnlinePattern.Matches($inputObject)
 		$startIndex = 0
+		Write-Host "$(Get-Date -Format 'HH:mm:ss') " -NoNew -ForegroundColor Gray
 
 		# GREEN COLOR
 		if ([bool]$greenPattern -eq $True) {
@@ -236,14 +237,12 @@ function StartServerMonitor
 
 		# CAPTURE ADDITIONAL LOG?
 		if ([bool]$additionalLogPath -eq $true) {
-			$ms1[0].Value | Out-File $additionalLogPath -Append -Encoding UTF8
-			$ms2[0].Value | Out-File $additionalLogPath -Append -Encoding UTF8
-			$ms3[0].Value | Out-File $additionalLogPath -Append -Encoding UTF8
-			<#if ($startIndex -lt $inputObject.Length) {
-				$inputObject  | Out-File "OutNew" -Append
-			}#>
+			$timestamp = (Get-Date -Format 'HH:mm:ss')
+			@{$true="$timestamp $($ms1[0].Value)";}[$ms1[0].Value.Length -gt 1] | Out-File $additionalLogPath -Append -Encoding UTF8
+			@{$true="$timestamp $($ms2[0].Value)";}[$ms2[0].Value.Length -gt 1] | Out-File $additionalLogPath -Append -Encoding UTF8
+			@{$true="$timestamp $($ms3[0].Value)";}[$ms3[0].Value.Length -gt 1] | Out-File $additionalLogPath -Append -Encoding UTF8
 		}
-		
+
 		Write-Host
 	}
 }
