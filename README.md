@@ -6,12 +6,12 @@ Powershell (v3.0+ required)
 Blackwake v0.1.15e Server  (tested)
 
 # Installation
-* Put script to server folder, for example "C:\SteamCMD\blackwake_server"
-* Run powershell as administrator and execute ```Set-ExecutionPolicy Bypass -Force``` to allow scripts
-* Edit settings
-* Finally execute ```start powershell .\PsBlackwakeMonitor.ps1```
+* Put script in server folder, for example "C:\SteamCMD\blackwake_server"
+* Edit script settings
 * Put ```start /D %~dp0 Powershell.exe -ExecutionPolicy Bypass -NoLogo -File %~dp0\PsBlackwakeMonitor.ps1``` into  
-```server update.bat``` for autorestart
+```server update.bat``` for server daily autorestart
+* Finally execute ```server update.bat``` as administrator
+
 
 
 ![PsBlackwakeMonitor Screenshot](https://raw.githubusercontent.com/man4red/PsBlackwakeMonitor/screenshots/PsBlackwakeMonitor_1.png?raw=true)
