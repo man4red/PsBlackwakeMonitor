@@ -71,7 +71,6 @@ $global:excludePattern = "(?ims)(InternalInvoke|WrongConnection|because the the 
 # PlayersOnline Pattern
 $global:playersOnlinePattern = ".*A client connected on socket \d{0,2}, there are now (?<online>\d{0,2}) clients connected.*|.*disconnect from \d{0,2}, there are now (?<online>\d{0,2}) clients connected.*"
 
-
 #-----------------------------------------------------------[Functions]------------------------------------------------------------
 # CLOSE PREVIOUS POWERSHELL CAPTURE WINDOWS
 Function CloseWindowByTitle($title) {
@@ -80,9 +79,22 @@ Function CloseWindowByTitle($title) {
 		$result | Kill -Force -Confirm:$false
 	}
 }
+# GET BLACKWAKE PROCESS THROUGH WMI
+Function GetBlackwakeProcessPath () {
+	$wmiQuery = "select ProcessId,ExecutablePath from win32_process where Name='{0}'" -f ($serverExe.Name)
+	$wmiProcess = (get-wmiobject -query $wmiQuery) | Where {$_.ExecutablePath -eq $serverExePath}
+	$processCount = ($wmiProcess | Measure).Count
+	if ($processCount -eq 1 -and [bool]$wmiProcess.ProcessId) {
+		$process = Get-Process -PID $wmiProcess.ProcessId
+		if ([bool]$process) {
+			return $process
+		}
+	}
+	return $false
+}
 
 # REMOVE UTF8 BOM FROM FILE
-function Remove-Utf8BOM
+Function Remove-Utf8BOM
 {
     [CmdletBinding(SupportsShouldProcess = $true)]
     PARAM(
@@ -263,9 +275,9 @@ $v = 1
 $s = 1;
 
 # CHECK IF NOT VALIDATED AND STARTED
-while (-not [bool]($global:serverProcess = (Get-Process | ? Path -ieq $serverExePath)) `
+while (-not [bool]($global:serverProcess = (GetBlackwakeProcessPath)) `
 			-or `
-			(-not ($validated) -and -not [bool]($serverProcess = (Get-Process | ? Path -ieq $serverExePath))) )
+			(-not ($validated) -and -not [bool]($global:serverProcess = (GetBlackwakeProcessPath))) )
 {
 	# SET BRAKE ON 3rd ATTEMPT
 	if ($v -gt 1) {
@@ -317,7 +329,7 @@ while (-not [bool]($global:serverProcess = (Get-Process | ? Path -ieq $serverExe
 			Write-Host " OK" -ForegroundColor Green
 		}
 		
-		while (-not [bool]($serverProcess = (Get-Process | ? Path -ieq $serverExePath))) {
+		while (-not [bool]($serverProcess = (GetBlackwakeProcessPath))) {
 		
 			# START SERVER
 			Write-Host "Waiting server to start..." -NoNew;
@@ -339,7 +351,7 @@ while (-not [bool]($global:serverProcess = (Get-Process | ? Path -ieq $serverExe
 			Start-Sleep 5
 			
 			# SET PROCESS PRIORITY
-			$serverProcess = (Get-Process | ? Path -ieq $serverExePath)
+			$serverProcess = (GetBlackwakeProcessPath)
 			if ([bool]$serverProcess -eq $True) {
 				Write-Host " OK" -ForegroundColor Green
 			
@@ -387,4 +399,4 @@ while (-not [bool]($global:serverProcess = (Get-Process | ? Path -ieq $serverExe
 $pswindow.WindowTitle = $windowTitle
 
 while (-not (Test-Path $logFilePath)) { Write-Host "Waiting for log..."; Start-Sleep 10;  }
-Get-Content $logFilePath -Wait -Tail 2000 | StartServerMonitor
+Get-Content $logFilePath -Wait -Tail 1000 | StartServerMonitor
