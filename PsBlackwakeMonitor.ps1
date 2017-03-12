@@ -276,19 +276,19 @@ CloseWindowByTitle "$serverIp`:$serverPort"
 
 # SET WINDOW PROPERTIES
 $pshost = get-host
-$pswindow = $pshost.ui.RawUI
-#BUFER SIZE
-$newsize = $pswindow.buffersize
-$newsize.height = 1000
-$newsize.width = 150
-$pswindow.buffersize = $newsize
-#WINDOW SIZE
-$newsize = $pswindow.windowsize
-$newsize.height = 20
-$newsize.width = 150
-$pswindow.windowsize = $newsize
-
-Start-Sleep 1
+if ($pshost.Name -eq "ConsoleHost") {
+    $pswindow = $pshost.ui.RawUI
+    #BUFER SIZE
+    $newsize = $pswindow.buffersize
+    $newsize.height = 1000
+    $newsize.width = 150
+    $pswindow.buffersize = $newsize
+    #WINDOW SIZE
+    $newsize = $pswindow.windowsize
+    $newsize.height = 20
+    $newsize.width = 150
+    $pswindow.windowsize = $newsize
+}
 
 # START SERVER
 $validated = $false
