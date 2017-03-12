@@ -322,7 +322,7 @@ while (-not [bool]($global:serverProcess = (GetBlackwakeProcessPath)) `
 			$pinfo.WindowStyle = "Hidden"
 			$pinfo.Arguments = "+login anonymous +force_install_dir $serverPath +app_update 423410 validate +quit"
 			$p = New-Object System.Diagnostics.Process
-			$p.StartInfo = $pinfo
+			$p.StartInfo = $pinfo.FileName
 			$p.Start() | Out-Null
 			$p.WaitForExit()
 			$stdout = $p.StandardOutput.ReadToEnd()
