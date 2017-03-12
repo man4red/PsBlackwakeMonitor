@@ -38,29 +38,42 @@ If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 $global:dayOfWeek = $(Get-Date).DayOfWeek.value__
 # Invocation Path
 $global:path = Split-Path -parent $MyInvocation.MyCommand.Definition
-# Path to output_log
-$global:logFilePath = ("$path\BlackwakeServer_Data\output_log.txt").ToString()
-# Path to Server.cfg
-$global:serverCfgPath = (Get-Item("$path\Server.cfg") -ErrorAction Stop)
-$global:serverCfg = (Get-Content ($serverCfgPath) -ErrorAction Stop)
-# Server name from Server.cfg
-$global:serverName = ($serverCfg | Select-String -Pattern "serverName=(.*)$").Matches.groups[1].value
-# Server IP from Server.cfg
-$global:serverIp = ($serverCfg | Select-String -Pattern "useIP=(.*)$").Matches.groups[1].value
-# Server port from Server.cfg
-$global:serverPort = ($serverCfg | Select-String -Pattern "port=(.*)$").Matches.groups[1].value
-# Server sPort from Server.cfg
-$global:serverSPort = ($serverCfg | Select-String -Pattern "sport=(.*)$").Matches.groups[1].value
-# PlayerUpdateRate from Server.cfg
-$global:serverPlayerUpdateRate = ($serverCfg | Select-String -Pattern "playerUpdateRate=(.*)$").Matches.groups[1].value
-# Path to SteamCMD.exe
-$global:steamCMD = (Get-Item ("C:\SteamCMD\steamcmd.exe") -ErrorAction Stop)
-# Path to serverExe
+# Output_log
+$global:logFilePath = (Get-Item "$path\BlackwakeServer_Data\output_log.txt" -ErrorAction Stop)
+# Blackwakeserver.exe
 $global:serverExe = (Get-Item ($path + "\BlackwakeServer.exe") -ErrorAction Stop)
 # Path to Server directory
 $global:serverPath = $serverExe.DirectoryName
 # Path to blackwakeserver.exe
 $global:serverExePath = $serverExe.FullName
+# Path to SteamCMD.exe
+$global:steamCMD = (Get-Item ("C:\SteamCMD\steamcmd.exe") -ErrorAction Stop)
+# Args for SteamCMD
+$global:steamCMDArgs = "+login anonymous +force_install_dir $serverPath +app_update 423410 validate +quit"
+# Server.cfg
+$global:serverCfg = (Get-Item("$path\Server.cfg") -ErrorAction Stop)
+# Server.cfg Content
+$global:serverCfgContent = (Get-Content ($serverCfg) -Raw -ErrorAction Stop)
+
+# Parse config
+$configRegexPattern = [regex]"(?ms)serverName=(?<servername>.*?)$.*?useIP=(?<ip>.*?)$.*port=(?<port>.*?)$.*sport=(?<sport>.*?)$.*playerUpdateRate=(?<updaterate>.*?)$.*"
+$result = $configRegexPattern.Match($serverCfgContent)
+if ($result.Success -eq $true) {
+    # Server name
+    $global:serverName             = ($result[0].Groups["servername"].Value)
+    # Server IP
+    $global:serverIp               = ($result[0].Groups["ip"].Value)
+    # Server port
+    $global:serverPort             = ($result[0].Groups["port"].Value)
+    # Server sPort
+    $global:serverSPort            = ($result[0].Groups["sport"].Value)
+    # Server PlayerUpdateRate
+    $global:serverPlayerUpdateRate = ($result[0].Groups["updaterate"].Value)
+} else {
+    Write-Host "Unable to parse config" -ForegroundColor Red
+    Start-Sleep 60
+    Exit (-8)
+}
 
 # Change PlayerUpdateRate on weekends ?
 $global:changePlayerUpdateRateOnWeekends = $true
@@ -78,6 +91,7 @@ $global:additionalLogNameFormat = "$(Get-Date -Format 'yyyy.MM.dd').log"
 $global:additionalLogPath = "$serverPath\logs\$additionalLogNameFormat"
 # Wait for server port on server start?
 $global:waitForPort = $true
+
 # Default windows title
 $global:windowTitle = "$serverName | $serverIp`:$serverPort | UpdateRate`: $serverPlayerUpdateRate | ServerOnline`: $([bool]$serverProcess) | PlayersOnline`: 0"
 
@@ -313,25 +327,24 @@ while (-not [bool]($global:serverProcess = (GetBlackwakeProcessPath)) `
 	# VALIDATION | UPDATE
 	if (-not $skipValidation) {
 		Write-Host "Validating server at ""$serverPath\""..." -NoNew
-		if ([bool](Test-Path $steamCMD)) {
-			$pinfo = New-Object System.Diagnostics.ProcessStartInfo
-			$pinfo.FileName = $steamCMD
-			$pinfo.RedirectStandardError = $true
-			$pinfo.RedirectStandardOutput = $true
-			$pinfo.UseShellExecute = $false
-			$pinfo.WindowStyle = "Hidden"
-			$pinfo.Arguments = "+login anonymous +force_install_dir $serverPath +app_update 423410 validate +quit"
-			$p = New-Object System.Diagnostics.Process
-			$p.StartInfo = $pinfo
-			$p.Start() | Out-Null
-			$p.WaitForExit()
-			$stdout = $p.StandardOutput.ReadToEnd()
-			$stderr = $p.StandardError.ReadToEnd()
-		} else {
-			Write-Host " Failed. Check your path to steamCMD at `$steamCMD variable" -ForegroundColor Red
-			Start-Sleep 60
-			Exit(-6);
-		}
+
+		$pinfo = New-Object System.Diagnostics.ProcessStartInfo
+		$pinfo.FileName = $steamCMD
+		$pinfo.RedirectStandardError = $true
+		$pinfo.RedirectStandardOutput = $true
+		$pinfo.UseShellExecute = $false
+		$pinfo.WindowStyle = "Hidden"
+		$pinfo.Arguments = $steamCMDArgs
+		$p = New-Object System.Diagnostics.Process
+		$p.StartInfo = $pinfo
+		$p.Start() | Out-Null
+		$p.WaitForExit()
+		$stdout = $p.StandardOutput.ReadToEnd()
+		$stderr = $p.StandardError.ReadToEnd()
+        if ([bool]$additionalLogPath) {
+            $stdout | Out-File $additionalLogPath -Append utf8
+            $stderr | Out-File $additionalLogPath -Append utf8
+        }
 	} else {
 		Write-Host "Skipping server validation at ""$serverPath\""..." -NoNew -ForegroundColor Yellow
 	}
@@ -349,10 +362,10 @@ while (-not [bool]($global:serverProcess = (GetBlackwakeProcessPath)) `
 			Write-Host "Setting up LOG File..." -NoNew
 			if ($dayOfWeek -ge 5) {$playerUpdateRate = $serverPlayerUpdateRateWeekends} else {$playerUpdateRate = $serverPlayerUpdateRateWeekDays}
 			# UPDATE CFG
-			$serverCfg = $serverCfg -replace 'playerUpdateRate=\d{2}', "playerUpdateRate=$playerUpdateRate"
-			$result = $serverCfg | Out-File $serverCfgPath -Encoding UTF8
+			$serverCfgContent = $serverCfgContent -replace 'playerUpdateRate=\d{2}', "playerUpdateRate=$playerUpdateRate"
+			$result = $serverCfgContent | Out-File $serverCfg -Encoding UTF8
 			
-			Remove-Utf8BOM $serverCfgPath.FullName
+			Remove-Utf8BOM $serverCfg.FullName
 			Write-Host " OK" -ForegroundColor Green
 		}
 		
