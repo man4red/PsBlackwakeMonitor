@@ -326,7 +326,7 @@ while (-not [bool]($global:serverProcess = (GetBlackwakeProcessPath)) `
 
 	# VALIDATION | UPDATE
 	if (-not $skipValidation) {
-		Write-Host "Validating server at ""$serverPath\""..." -NoNew
+        Write-Host "Validating server at ""$serverPath\""..." -NoNew
 
 		$pinfo = New-Object System.Diagnostics.ProcessStartInfo
 		$pinfo.FileName = $steamCMD
@@ -363,7 +363,7 @@ while (-not [bool]($global:serverProcess = (GetBlackwakeProcessPath)) `
 			if ($dayOfWeek -ge 5) {$playerUpdateRate = $serverPlayerUpdateRateWeekends} else {$playerUpdateRate = $serverPlayerUpdateRateWeekDays}
 			# UPDATE CFG
 			$serverCfgContent = $serverCfgContent -replace 'playerUpdateRate=\d{2}', "playerUpdateRate=$playerUpdateRate"
-			$result = $serverCfgContent | Out-File $serverCfg -Encoding UTF8
+			$serverCfgContent | Out-File $serverCfg -Encoding UTF8
 			
 			Remove-Utf8BOM $serverCfg.FullName
 			Write-Host " OK" -ForegroundColor Green
