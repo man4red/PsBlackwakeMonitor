@@ -291,19 +291,25 @@ while (-not [bool]($global:serverProcess = (GetBlackwakeProcessPath)) `
 	# VALIDATION | UPDATE
 	if (-not $skipValidation) {
 		Write-Host "Validating server at ""$serverPath\""..." -NoNew
-		$pinfo = New-Object System.Diagnostics.ProcessStartInfo
-		$pinfo.FileName = $steamCMD
-		$pinfo.RedirectStandardError = $true
-		$pinfo.RedirectStandardOutput = $true
-		$pinfo.UseShellExecute = $false
-		$pinfo.WindowStyle = "Hidden"
-		$pinfo.Arguments = "+login anonymous +force_install_dir $serverPath +app_update 423410 validate +quit"
-		$p = New-Object System.Diagnostics.Process
-		$p.StartInfo = $pinfo
-		$p.Start() | Out-Null
-		$p.WaitForExit()
-		$stdout = $p.StandardOutput.ReadToEnd()
-		$stderr = $p.StandardError.ReadToEnd()
+		if ([bool](Test-Path $steamCMD)) {
+			$pinfo = New-Object System.Diagnostics.ProcessStartInfo
+			$pinfo.FileName = $steamCMD
+			$pinfo.RedirectStandardError = $true
+			$pinfo.RedirectStandardOutput = $true
+			$pinfo.UseShellExecute = $false
+			$pinfo.WindowStyle = "Hidden"
+			$pinfo.Arguments = "+login anonymous +force_install_dir $serverPath +app_update 423410 validate +quit"
+			$p = New-Object System.Diagnostics.Process
+			$p.StartInfo = $pinfo
+			$p.Start() | Out-Null
+			$p.WaitForExit()
+			$stdout = $p.StandardOutput.ReadToEnd()
+			$stderr = $p.StandardError.ReadToEnd()
+		} else {
+			Write-Host " Failed. Check your path to steamCMD at `$steamCMD variable" -ForegroundColor Red
+			Start-Sleep 60
+			Exit(-6);
+		}
 	} else {
 		Write-Host "Skipping server validation at ""$serverPath\""..." -NoNew -ForegroundColor Yellow
 	}
