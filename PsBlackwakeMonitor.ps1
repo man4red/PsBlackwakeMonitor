@@ -36,27 +36,49 @@ If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 
 # GLOBAL VARS
 $global:dayOfWeek = $(Get-Date).DayOfWeek.value__
+# Invocation Path
 $global:path = Split-Path -parent $MyInvocation.MyCommand.Definition
+# Path to output_log
 $global:logFilePath = ("$path\BlackwakeServer_Data\output_log.txt").ToString()
+# Path to Server.cfg
 $global:serverCfgPath = ("$path\Server.cfg")
 $global:serverCfg = (Get-Content ($serverCfgPath) -ErrorAction Stop)
+# Server name from Server.cfg
 $global:serverName = ($serverCfg | Select-String -Pattern "serverName=(.*)$").Matches.groups[1].value
+# Server IP from Server.cfg
 $global:serverIp = ($serverCfg | Select-String -Pattern "useIP=(.*)$").Matches.groups[1].value
+# Server port from Server.cfg
 $global:serverPort = ($serverCfg | Select-String -Pattern "port=(.*)$").Matches.groups[1].value
+# Server sPort from Server.cfg
 $global:serverSPort = ($serverCfg | Select-String -Pattern "sport=(.*)$").Matches.groups[1].value
+# PlayerUpdateRate from Server.cfg
 $global:serverPlayerUpdateRate = ($serverCfg | Select-String -Pattern "playerUpdateRate=(.*)$").Matches.groups[1].value
-$global:steamCMD = "C:\SteamCMD\steamcmd.exe"
+# Path to SteamCMD.exe
+$global:steamCMD = (Get-Item ("C:\SteamCMD\steamcmd.exe") -ErrorAction Stop)
+# Path to serverExe
 $global:serverExe = (Get-Item ($path + "\BlackwakeServer.exe") -ErrorAction Stop)
+# Path to Server directory
 $global:serverPath = $serverExe.DirectoryName
+# Path to blackwakeserver.exe
 $global:serverExePath = $serverExe.FullName
+
+# Change PlayerUpdateRate on weekends ?
 $global:changePlayerUpdateRateOnWeekends = $true
+# PlayerUpdateRate for weekdays
 $global:serverPlayerUpdateRateWeekDays = 16
+# PlayerUpdateRate for weekends
 $global:serverPlayerUpdateRateWeekends = 24
+# Server process priority
 $global:serverProcessPriorityClass = "High"
+# Skip server validation on start?
 $global:skipValidation = $false
+# Output log name format
 $global:additionalLogNameFormat = "$(Get-Date -Format 'yyyy.MM.dd').log"
+# Path to additional output log
 $global:additionalLogPath = "$serverPath\logs\$additionalLogNameFormat"
+# Wait for server port on server start?
 $global:waitForPort = $true
+# Default windows title
 $global:windowTitle = "$serverName | $serverIp`:$serverPort | UpdateRate`: $serverPlayerUpdateRate | ServerOnline`: $([bool]$serverProcess) | PlayersOnline`: 0"
 
 # SEARCH REGEX PATTERNS
