@@ -41,7 +41,7 @@ $global:path = Split-Path -parent $MyInvocation.MyCommand.Definition
 # Path to output_log
 $global:logFilePath = ("$path\BlackwakeServer_Data\output_log.txt").ToString()
 # Path to Server.cfg
-$global:serverCfgPath = ("$path\Server.cfg")
+$global:serverCfgPath = (Get-Item("$path\Server.cfg") -ErrorAction Stop)
 $global:serverCfg = (Get-Content ($serverCfgPath) -ErrorAction Stop)
 # Server name from Server.cfg
 $global:serverName = ($serverCfg | Select-String -Pattern "serverName=(.*)$").Matches.groups[1].value
@@ -322,7 +322,7 @@ while (-not [bool]($global:serverProcess = (GetBlackwakeProcessPath)) `
 			$pinfo.WindowStyle = "Hidden"
 			$pinfo.Arguments = "+login anonymous +force_install_dir $serverPath +app_update 423410 validate +quit"
 			$p = New-Object System.Diagnostics.Process
-			$p.StartInfo = $pinfo.FileName
+			$p.StartInfo = $pinfo
 			$p.Start() | Out-Null
 			$p.WaitForExit()
 			$stdout = $p.StandardOutput.ReadToEnd()
@@ -352,7 +352,7 @@ while (-not [bool]($global:serverProcess = (GetBlackwakeProcessPath)) `
 			$serverCfg = $serverCfg -replace 'playerUpdateRate=\d{2}', "playerUpdateRate=$playerUpdateRate"
 			$result = $serverCfg | Out-File $serverCfgPath -Encoding UTF8
 			
-			Remove-Utf8BOM $serverCfgPath
+			Remove-Utf8BOM $serverCfgPath.FullName
 			Write-Host " OK" -ForegroundColor Green
 		}
 		
